@@ -1,0 +1,6 @@
+{
+  "name": "Class Planner",
+  "description": "Smart university routine and class planner. Scan timetable photos with Gemini AI to generate weekly schedules, manage lectures, and track classes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

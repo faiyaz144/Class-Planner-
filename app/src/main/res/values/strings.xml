@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Class Planner</string>
+    <string name="scan_routine">Scan Class Routine</string>
+    <string name="weekly_schedule">Weekly Schedule</string>
+    <string name="today_classes">Today\'s Classes</string>
+    <string name="scan_instructions">Take a photo or upload an image of your university routine timetable to automatically extract your schedule.</string>
+    <string name="sample_timetable">Try Sample Timetable</string>
+    <string name="upload_photo">Upload Image</string>
+    <string name="take_photo">Capture Photo</string>
+    <string name="analyzing_routine">Gemini AI is analyzing your routine...</string>
+    <string name="clash_detected">Schedule Clash Detected</string>
+    <string name="no_classes_today">No classes scheduled for today! Enjoy your free time.</string>
+    <string name="widget_description">Displays today\'s university classes in chronological order to stay focused.</string>
+</resources>
