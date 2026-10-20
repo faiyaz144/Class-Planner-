@@ -54,6 +54,7 @@ import com.example.ui.theme.DarkAppBackground
 import com.example.ui.theme.DarkSurfaceCard
 import com.example.ui.theme.TextPrimaryWhite
 import com.example.ui.theme.TextSecondaryGray
+import com.example.util.rememberAppHaptic
 
 @Composable
 fun ExamsScreen(
@@ -63,12 +64,13 @@ fun ExamsScreen(
   onScanExamRoutine: () -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val haptic = rememberAppHaptic()
   var showAddDialog by remember { mutableStateOf(false) }
 
   LazyColumn(
     modifier = modifier
       .fillMaxSize()
-      .background(DarkAppBackground)
+      .background(MaterialTheme.colorScheme.background)
       .testTag("exams_screen_list"),
     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
     verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -86,12 +88,12 @@ fun ExamsScreen(
             text = "Exam Schedule",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = TextPrimaryWhite
+            color = MaterialTheme.colorScheme.onBackground
           )
           Text(
             text = "${exams.size} upcoming exam(s)",
             style = MaterialTheme.typography.bodySmall,
-            color = TextSecondaryGray
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
 
@@ -102,10 +104,16 @@ fun ExamsScreen(
           // Scan Exam Routine Action Button
           Surface(
             shape = RoundedCornerShape(12.dp),
-            color = Color(0xFF1E1F34),
+            color = MaterialTheme.colorScheme.surfaceVariant,
             modifier = Modifier.testTag("scan_exam_routine_header_btn")
           ) {
-            IconButton(onClick = onScanExamRoutine, modifier = Modifier.size(38.dp)) {
+            IconButton(
+              onClick = {
+                haptic.click()
+                onScanExamRoutine()
+              },
+              modifier = Modifier.size(38.dp)
+            ) {
               Icon(
                 Icons.Default.DocumentScanner,
                 contentDescription = "Scan Exam Routine",
@@ -121,7 +129,13 @@ fun ExamsScreen(
             color = AccentLilac,
             modifier = Modifier.testTag("add_exam_btn")
           ) {
-            IconButton(onClick = { showAddDialog = true }, modifier = Modifier.size(38.dp)) {
+            IconButton(
+              onClick = {
+                haptic.click()
+                showAddDialog = true
+              },
+              modifier = Modifier.size(38.dp)
+            ) {
               Icon(Icons.Default.Add, contentDescription = "Add Exam", tint = Color.Black, modifier = Modifier.size(22.dp))
             }
           }
@@ -167,7 +181,10 @@ fun ExamsScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
               // Scan Exam Routine Button
               Button(
-                onClick = onScanExamRoutine,
+                onClick = {
+                  haptic.click()
+                  onScanExamRoutine()
+                },
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = AccentLilac),
                 modifier = Modifier.testTag("empty_scan_exam_btn")
@@ -179,7 +196,10 @@ fun ExamsScreen(
 
               // Manual Add Button
               Button(
-                onClick = { showAddDialog = true },
+                onClick = {
+                  haptic.click()
+                  showAddDialog = true
+                },
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1F30)),
                 modifier = Modifier.testTag("empty_add_exam_manual_btn")
@@ -194,7 +214,7 @@ fun ExamsScreen(
       items(exams, key = { it.id }) { exam ->
         Card(
           shape = RoundedCornerShape(18.dp),
-          colors = CardDefaults.cardColors(containerColor = DarkSurfaceCard),
+          colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
           modifier = Modifier.fillMaxWidth()
         ) {
           Row(
@@ -207,13 +227,13 @@ fun ExamsScreen(
             Column(modifier = Modifier.weight(1f)) {
               Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = AccentLilac.copy(alpha = 0.15f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                 modifier = Modifier.padding(bottom = 6.dp)
               ) {
                 Text(
                   text = exam.courseCode,
                   fontWeight = FontWeight.Bold,
-                  color = AccentLilac,
+                  color = MaterialTheme.colorScheme.primary,
                   fontSize = 12.sp,
                   modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                 )
@@ -222,13 +242,13 @@ fun ExamsScreen(
                 text = exam.courseTitle,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = TextPrimaryWhite
+                color = MaterialTheme.colorScheme.onSurface
               )
               Spacer(modifier = Modifier.height(4.dp))
               Text(
                 text = "📅 ${exam.examDate} • ⏰ ${exam.time}",
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondaryGray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
               )
               if (exam.room.isNotBlank()) {
                 Text(
@@ -239,7 +259,12 @@ fun ExamsScreen(
               }
             }
 
-            IconButton(onClick = { onDeleteExam(exam.id) }) {
+            IconButton(
+              onClick = {
+                haptic.reject()
+                onDeleteExam(exam.id)
+              }
+            ) {
               Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444))
             }
           }
@@ -256,9 +281,12 @@ fun ExamsScreen(
     var room by remember { mutableStateOf("") }
 
     AlertDialog(
-      onDismissRequest = { showAddDialog = false },
-      containerColor = DarkSurfaceCard,
-      title = { Text("Add Exam", color = TextPrimaryWhite, fontWeight = FontWeight.Bold) },
+      onDismissRequest = {
+        haptic.click()
+        showAddDialog = false
+      },
+      containerColor = MaterialTheme.colorScheme.surface,
+      title = { Text("Add Exam", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
       text = {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
           OutlinedTextField(value = courseCode, onValueChange = { courseCode = it }, label = { Text("Course Code (e.g. CSC 497)") }, singleLine = true)
@@ -272,6 +300,7 @@ fun ExamsScreen(
         Button(
           onClick = {
             if (courseCode.isNotBlank()) {
+              haptic.confirm()
               onAddExam(
                 ExamItem(
                   courseCode = courseCode.trim().uppercase(),
@@ -282,16 +311,23 @@ fun ExamsScreen(
                 )
               )
               showAddDialog = false
+            } else {
+              haptic.reject()
             }
           },
-          colors = ButtonDefaults.buttonColors(containerColor = AccentLilac)
+          colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-          Text("Add", color = Color.Black, fontWeight = FontWeight.Bold)
+          Text("Add", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
         }
       },
       dismissButton = {
-        TextButton(onClick = { showAddDialog = false }) {
-          Text("Cancel", color = TextSecondaryGray)
+        TextButton(
+          onClick = {
+            haptic.click()
+            showAddDialog = false
+          }
+        ) {
+          Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
       }
     )

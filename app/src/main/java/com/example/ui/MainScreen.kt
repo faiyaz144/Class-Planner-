@@ -75,6 +75,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.ClassRoutine
 import com.example.ui.components.ClassCueDrawerContent
+import com.example.ui.components.ThemeSelectionDialog
 import com.example.ui.screens.AddEditClassDialog
 import com.example.ui.screens.ExamsScreen
 import com.example.ui.screens.FacultyScreen
@@ -87,6 +88,7 @@ import com.example.ui.theme.DarkAppBackground
 import com.example.ui.theme.DarkSurfaceCard
 import com.example.ui.theme.TextPrimaryWhite
 import com.example.ui.theme.TextSecondaryGray
+import com.example.util.rememberAppHaptic
 import kotlinx.coroutines.launch
 
 @Composable
@@ -95,6 +97,7 @@ fun MainScreen(
   modifier: Modifier = Modifier
 ) {
   val context = LocalContext.current
+  val haptic = rememberAppHaptic()
   val coroutineScope = rememberCoroutineScope()
   val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
@@ -113,6 +116,10 @@ fun MainScreen(
   val examScanState by viewModel.examScanState.collectAsStateWithLifecycle()
   val showExamScannerModal by viewModel.showExamScannerModal.collectAsStateWithLifecycle()
   val showSettingsModal by viewModel.showSettingsModal.collectAsStateWithLifecycle()
+  val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
+  val oledPitchBlackEnabled by viewModel.oledPitchBlackEnabled.collectAsStateWithLifecycle()
+  val accentOverrideHex by viewModel.accentOverrideHex.collectAsStateWithLifecycle()
+  val showThemeModal by viewModel.showThemeModal.collectAsStateWithLifecycle()
   val editingRoutine by viewModel.editingRoutine.collectAsStateWithLifecycle()
   val notificationsEnabled by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
   val notificationLeadMinutes by viewModel.notificationLeadMinutes.collectAsStateWithLifecycle()
@@ -145,14 +152,15 @@ fun MainScreen(
     drawerState = drawerState,
     drawerContent = {
       ModalDrawerSheet(
-        drawerContainerColor = Color(0xFF0C0D15),
-        drawerContentColor = TextPrimaryWhite,
+        drawerContainerColor = MaterialTheme.colorScheme.surface,
+        drawerContentColor = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.width(310.dp)
       ) {
         ClassCueDrawerContent(
           studentName = studentName,
           totalClassesWeekly = routines.size,
           attendanceCount = attendanceCount,
+          currentThemeName = currentTheme.displayName,
           onOpenAttendance = { showAttendanceDialog = true },
           onNewSemester = { showNewSemesterDialog = true },
           onOpenBreaks = { showBreaksDialog = true },
@@ -169,6 +177,7 @@ fun MainScreen(
           onImportRoutine = { viewModel.openScanner() },
           onScanExamRoutine = { viewModel.openExamScanner() },
           onOpenSettings = { viewModel.openSettings() },
+          onOpenThemes = { viewModel.openThemeModal() },
           onCloseDrawer = { coroutineScope.launch { drawerState.close() } }
         )
       }
@@ -176,7 +185,7 @@ fun MainScreen(
   ) {
     Scaffold(
       modifier = modifier.fillMaxSize(),
-      containerColor = DarkAppBackground,
+      containerColor = MaterialTheme.colorScheme.background,
       topBar = {
         // Top App Bar matching Images 1, 2, 3
         Row(
@@ -192,15 +201,18 @@ fun MainScreen(
             modifier = Modifier
               .size(42.dp)
               .clip(CircleShape)
-              .background(Color(0xFF161726))
-              .clickable { coroutineScope.launch { drawerState.open() } }
+              .background(MaterialTheme.colorScheme.surfaceVariant)
+              .clickable {
+                haptic.click()
+                coroutineScope.launch { drawerState.open() }
+              }
               .testTag("hamburger_menu_btn"),
             contentAlignment = Alignment.Center
           ) {
             Icon(
               Icons.Default.Menu,
               contentDescription = "Menu",
-              tint = TextPrimaryWhite,
+              tint = MaterialTheme.colorScheme.onSurface,
               modifier = Modifier.size(20.dp)
             )
           }
@@ -212,7 +224,7 @@ fun MainScreen(
                 text = "This week",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimaryWhite,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 17.sp
               )
               val range = if (weekCapsules.size >= 7) {
@@ -221,7 +233,7 @@ fun MainScreen(
               Text(
                 text = range,
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondaryGray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp
               )
             }
@@ -229,40 +241,70 @@ fun MainScreen(
             Spacer(modifier = Modifier.width(1.dp))
           }
 
-          // Right: Scanner Button + Circular Lilac/Purple FAB button (Image 1 & 3)
-          Row(verticalAlignment = Alignment.CenterVertically) {
+          // Right: Theme Palette Button + Scanner Button + Circular FAB button
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+          ) {
+            // Theme Options Button
             Box(
               modifier = Modifier
                 .size(42.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF161726))
-                .clickable { viewModel.openScanner() }
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable {
+                  haptic.click()
+                  viewModel.openThemeModal()
+                }
+                .testTag("top_theme_btn"),
+              contentAlignment = Alignment.Center
+            ) {
+              Icon(
+                Icons.Default.Palette,
+                contentDescription = "Theme Options",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+              )
+            }
+
+            // Scanner Button
+            Box(
+              modifier = Modifier
+                .size(42.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable {
+                  haptic.click()
+                  viewModel.openScanner()
+                }
                 .testTag("top_scan_routine_btn"),
               contentAlignment = Alignment.Center
             ) {
               Icon(
                 Icons.Default.DocumentScanner,
                 contentDescription = "Scan Routine",
-                tint = AccentLilac,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
               )
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
-
+            // Add Class FAB
             Box(
               modifier = Modifier
                 .size(42.dp)
                 .clip(CircleShape)
-                .background(AccentLilac)
-                .clickable { isAddingNewClass = true }
+                .background(MaterialTheme.colorScheme.primary)
+                .clickable {
+                  haptic.click()
+                  isAddingNewClass = true
+                }
                 .testTag("top_add_class_fab"),
               contentAlignment = Alignment.Center
             ) {
               Icon(
                 Icons.Default.Add,
                 contentDescription = "Add Class",
-                tint = Color.Black,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(22.dp)
               )
             }
@@ -272,14 +314,17 @@ fun MainScreen(
       bottomBar = {
         // Bottom Navigation Bar matching Image 1, 2, 3: Today, Week, Exams, Faculty
         NavigationBar(
-          containerColor = DarkAppBackground,
+          containerColor = MaterialTheme.colorScheme.background,
           tonalElevation = 0.dp,
           modifier = Modifier.testTag("bottom_nav_bar")
         ) {
           // 1. Today Tab
           NavigationBarItem(
             selected = currentTab == AppTab.TODAY,
-            onClick = { viewModel.setTab(AppTab.TODAY) },
+            onClick = {
+              haptic.tick()
+              viewModel.setTab(AppTab.TODAY)
+            },
             icon = {
               Icon(
                 Icons.Default.CalendarToday,
@@ -289,11 +334,11 @@ fun MainScreen(
             },
             label = { Text("Today", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
             colors = NavigationBarItemDefaults.colors(
-              indicatorColor = Color(0xFF232238),
-              selectedIconColor = AccentLilac,
-              selectedTextColor = AccentLilac,
-              unselectedIconColor = TextSecondaryGray,
-              unselectedTextColor = TextSecondaryGray
+              indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+              selectedIconColor = MaterialTheme.colorScheme.primary,
+              selectedTextColor = MaterialTheme.colorScheme.primary,
+              unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             modifier = Modifier.testTag("nav_item_today")
           )
@@ -301,7 +346,10 @@ fun MainScreen(
           // 2. Week Tab
           NavigationBarItem(
             selected = currentTab == AppTab.WEEK,
-            onClick = { viewModel.setTab(AppTab.WEEK) },
+            onClick = {
+              haptic.tick()
+              viewModel.setTab(AppTab.WEEK)
+            },
             icon = {
               Icon(
                 Icons.Default.TableChart,
@@ -311,11 +359,11 @@ fun MainScreen(
             },
             label = { Text("Week", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
             colors = NavigationBarItemDefaults.colors(
-              indicatorColor = Color(0xFF232238),
-              selectedIconColor = AccentLilac,
-              selectedTextColor = AccentLilac,
-              unselectedIconColor = TextSecondaryGray,
-              unselectedTextColor = TextSecondaryGray
+              indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+              selectedIconColor = MaterialTheme.colorScheme.primary,
+              selectedTextColor = MaterialTheme.colorScheme.primary,
+              unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             modifier = Modifier.testTag("nav_item_week")
           )
@@ -323,7 +371,10 @@ fun MainScreen(
           // 3. Exams Tab
           NavigationBarItem(
             selected = currentTab == AppTab.EXAMS,
-            onClick = { viewModel.setTab(AppTab.EXAMS) },
+            onClick = {
+              haptic.tick()
+              viewModel.setTab(AppTab.EXAMS)
+            },
             icon = {
               Icon(
                 Icons.AutoMirrored.Filled.FactCheck,
@@ -333,11 +384,11 @@ fun MainScreen(
             },
             label = { Text("Exams", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
             colors = NavigationBarItemDefaults.colors(
-              indicatorColor = Color(0xFF232238),
-              selectedIconColor = AccentLilac,
-              selectedTextColor = AccentLilac,
-              unselectedIconColor = TextSecondaryGray,
-              unselectedTextColor = TextSecondaryGray
+              indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+              selectedIconColor = MaterialTheme.colorScheme.primary,
+              selectedTextColor = MaterialTheme.colorScheme.primary,
+              unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             modifier = Modifier.testTag("nav_item_exams")
           )
@@ -345,7 +396,10 @@ fun MainScreen(
           // 4. Faculty Tab
           NavigationBarItem(
             selected = currentTab == AppTab.FACULTY,
-            onClick = { viewModel.setTab(AppTab.FACULTY) },
+            onClick = {
+              haptic.tick()
+              viewModel.setTab(AppTab.FACULTY)
+            },
             icon = {
               Icon(
                 Icons.Default.People,
@@ -355,11 +409,11 @@ fun MainScreen(
             },
             label = { Text("Faculty", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
             colors = NavigationBarItemDefaults.colors(
-              indicatorColor = Color(0xFF232238),
-              selectedIconColor = AccentLilac,
-              selectedTextColor = AccentLilac,
-              unselectedIconColor = TextSecondaryGray,
-              unselectedTextColor = TextSecondaryGray
+              indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+              selectedIconColor = MaterialTheme.colorScheme.primary,
+              selectedTextColor = MaterialTheme.colorScheme.primary,
+              unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             modifier = Modifier.testTag("nav_item_faculty")
           )
@@ -379,13 +433,34 @@ fun MainScreen(
               weekCapsules = weekCapsules,
               nextClass = nextClass,
               routines = routines,
-              onSelectDay = { viewModel.selectDay(it) },
-              onPreviousWeek = { viewModel.previousWeek() },
-              onNextWeek = { viewModel.nextWeek() },
-              onAddClassClick = { isAddingNewClass = true },
-              onScanRoutineClick = { viewModel.openScanner() },
-              onEditRoutine = { viewModel.setEditingRoutine(it) },
-              onDeleteRoutine = { viewModel.deleteRoutine(it) }
+              onSelectDay = {
+                haptic.tick()
+                viewModel.selectDay(it)
+              },
+              onPreviousWeek = {
+                haptic.tick()
+                viewModel.previousWeek()
+              },
+              onNextWeek = {
+                haptic.tick()
+                viewModel.nextWeek()
+              },
+              onAddClassClick = {
+                haptic.click()
+                isAddingNewClass = true
+              },
+              onScanRoutineClick = {
+                haptic.click()
+                viewModel.openScanner()
+              },
+              onEditRoutine = {
+                haptic.click()
+                viewModel.setEditingRoutine(it)
+              },
+              onDeleteRoutine = {
+                haptic.reject()
+                viewModel.deleteRoutine(it)
+              }
             )
           }
 
@@ -394,20 +469,44 @@ fun MainScreen(
               routines = routines,
               weekCapsules = weekCapsules,
               weekOffset = weekOffset,
-              onPreviousWeek = { viewModel.previousWeek() },
-              onNextWeek = { viewModel.nextWeek() },
-              onAddClick = { isAddingNewClass = true },
-              onEditRoutine = { viewModel.setEditingRoutine(it) },
-              onDeleteRoutine = { viewModel.deleteRoutine(it) }
+              onPreviousWeek = {
+                haptic.tick()
+                viewModel.previousWeek()
+              },
+              onNextWeek = {
+                haptic.tick()
+                viewModel.nextWeek()
+              },
+              onAddClick = {
+                haptic.click()
+                isAddingNewClass = true
+              },
+              onEditRoutine = {
+                haptic.click()
+                viewModel.setEditingRoutine(it)
+              },
+              onDeleteRoutine = {
+                haptic.reject()
+                viewModel.deleteRoutine(it)
+              }
             )
           }
 
           AppTab.EXAMS -> {
             ExamsScreen(
               exams = exams,
-              onAddExam = { viewModel.addExam(it) },
-              onDeleteExam = { viewModel.deleteExam(it) },
-              onScanExamRoutine = { viewModel.openExamScanner() }
+              onAddExam = {
+                haptic.confirm()
+                viewModel.addExam(it)
+              },
+              onDeleteExam = {
+                haptic.reject()
+                viewModel.deleteExam(it)
+              },
+              onScanExamRoutine = {
+                haptic.click()
+                viewModel.openExamScanner()
+              }
             )
           }
 
@@ -457,9 +556,22 @@ fun MainScreen(
             onImageSelected = { viewModel.onImageUriSelected(it) },
             onBitmapCaptured = { viewModel.onBitmapCaptured(it) },
             onImportTextRoutine = { viewModel.onImportTextRoutine(it) },
-            onStartScan = { viewModel.startScan() },
-            onConfirmRoutines = { list, replace -> viewModel.confirmScannedRoutines(list, replace) },
-            onResetScan = { viewModel.resetScanState() }
+            onStartScan = {
+              haptic.heavy()
+              viewModel.startScan()
+            },
+            onConfirmRoutines = { list, replace ->
+              haptic.confirm()
+              viewModel.confirmScannedRoutines(list, replace)
+            },
+            onResetScan = {
+              haptic.click()
+              viewModel.resetScanState()
+            },
+            onSampleClick = {
+              haptic.click()
+              viewModel.onSampleImageSelected()
+            }
           )
         }
       }
@@ -502,9 +614,18 @@ fun MainScreen(
             onImageSelected = { viewModel.onExamImageUriSelected(it) },
             onBitmapCaptured = { viewModel.onExamBitmapCaptured(it) },
             onImportTextRoutine = { viewModel.onImportTextExamRoutine(it) },
-            onStartScan = { viewModel.startExamScan() },
-            onConfirmExams = { list, replace -> viewModel.confirmScannedExams(list, replace) },
-            onResetScan = { viewModel.resetExamScanState() }
+            onStartScan = {
+              haptic.heavy()
+              viewModel.startExamScan()
+            },
+            onConfirmExams = { list, replace ->
+              haptic.confirm()
+              viewModel.confirmScannedExams(list, replace)
+            },
+            onResetScan = {
+              haptic.click()
+              viewModel.resetExamScanState()
+            }
           )
         }
       }
@@ -521,6 +642,7 @@ fun MainScreen(
         viewModel.setEditingRoutine(null)
       },
       onSave = { routine ->
+        haptic.confirm()
         viewModel.saveRoutine(routine)
         isAddingNewClass = false
       }
@@ -543,6 +665,73 @@ fun MainScreen(
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
           )
+
+          Spacer(modifier = Modifier.height(4.dp))
+
+          // App Theme & Palette Section
+          Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = Color(0xFF181928),
+            modifier = Modifier
+              .fillMaxWidth()
+              .clickable {
+                haptic.click()
+                viewModel.openThemeModal()
+              }
+          ) {
+            Row(
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                  modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(currentTheme.previewBackground)
+                    .border(1.dp, currentTheme.accentColor.copy(alpha = 0.5f), RoundedCornerShape(8.dp)),
+                  contentAlignment = Alignment.Center
+                ) {
+                  Box(
+                    modifier = Modifier
+                      .size(14.dp)
+                      .clip(CircleShape)
+                      .background(currentTheme.accentColor)
+                  )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                  Text(
+                    text = "Theme & Appearance",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = TextPrimaryWhite
+                  )
+                  Text(
+                    text = currentTheme.displayName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = currentTheme.accentColor
+                  )
+                }
+              }
+
+              Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = currentTheme.accentColor.copy(alpha = 0.15f)
+              ) {
+                Text(
+                  text = "Change",
+                  fontWeight = FontWeight.Bold,
+                  fontSize = 12.sp,
+                  color = currentTheme.accentColor,
+                  modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                )
+              }
+            }
+          }
 
           Spacer(modifier = Modifier.height(4.dp))
 
@@ -574,7 +763,10 @@ fun MainScreen(
 
                 Switch(
                   checked = notificationsEnabled,
-                  onCheckedChange = { viewModel.toggleNotifications(it) },
+                  onCheckedChange = {
+                    haptic.tick()
+                    viewModel.toggleNotifications(it)
+                  },
                   colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.Black,
                     checkedTrackColor = AccentLilac
@@ -602,7 +794,10 @@ fun MainScreen(
                       color = if (isSelected) AccentLilac else Color(0xFF222338),
                       modifier = Modifier
                         .weight(1f)
-                        .clickable { viewModel.setNotificationLeadMinutes(mins) }
+                        .clickable {
+                          haptic.tick()
+                          viewModel.setNotificationLeadMinutes(mins)
+                        }
                     ) {
                       Box(
                         modifier = Modifier.padding(vertical = 6.dp),
@@ -623,7 +818,10 @@ fun MainScreen(
 
                 // Test Class Notification Button
                 Button(
-                  onClick = { viewModel.sendTestClassNotification() },
+                  onClick = {
+                    haptic.click()
+                    viewModel.sendTestClassNotification()
+                  },
                   colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF23253C)),
                   shape = RoundedCornerShape(8.dp),
                   modifier = Modifier.fillMaxWidth()
@@ -648,6 +846,7 @@ fun MainScreen(
 
           Button(
             onClick = {
+              haptic.reject()
               viewModel.clearAllRoutines()
               viewModel.closeSettings()
             },
@@ -661,17 +860,18 @@ fun MainScreen(
       confirmButton = {
         Button(
           onClick = {
+            haptic.confirm()
             viewModel.setStudentName(tempName)
             viewModel.closeSettings()
           },
-          colors = ButtonDefaults.buttonColors(containerColor = AccentLilac)
+          colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-          Text("Save", color = Color.Black, fontWeight = FontWeight.Bold)
+          Text("Save", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
         }
       },
       dismissButton = {
         TextButton(onClick = { viewModel.closeSettings() }) {
-          Text("Cancel", color = TextSecondaryGray)
+          Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
       }
     )
@@ -681,18 +881,21 @@ fun MainScreen(
   if (showAttendanceDialog) {
     AlertDialog(
       onDismissRequest = { showAttendanceDialog = false },
-      containerColor = DarkSurfaceCard,
-      title = { Text("Attendance Tracker", color = TextPrimaryWhite, fontWeight = FontWeight.Bold) },
+      containerColor = MaterialTheme.colorScheme.surface,
+      title = { Text("Attendance Tracker", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
       text = {
         Column {
-          Text("You have $attendanceCount missed/pending attendance records.", color = TextSecondaryGray)
+          Text("You have $attendanceCount missed/pending attendance records.", color = MaterialTheme.colorScheme.onSurfaceVariant)
           Spacer(modifier = Modifier.height(8.dp))
-          Text("All lectures this week are in regular standing (95% attendance rate).", color = TextPrimaryWhite)
+          Text("All lectures this week are in regular standing (95% attendance rate).", color = MaterialTheme.colorScheme.onSurface)
         }
       },
       confirmButton = {
-        Button(onClick = { showAttendanceDialog = false }, colors = ButtonDefaults.buttonColors(containerColor = AccentLilac)) {
-          Text("OK", color = Color.Black, fontWeight = FontWeight.Bold)
+        Button(
+          onClick = { showAttendanceDialog = false },
+          colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+          Text("OK", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
         }
       }
     )
@@ -702,10 +905,10 @@ fun MainScreen(
   if (showNewSemesterDialog) {
     AlertDialog(
       onDismissRequest = { showNewSemesterDialog = false },
-      containerColor = DarkSurfaceCard,
-      title = { Text("Start New Semester?", color = TextPrimaryWhite, fontWeight = FontWeight.Bold) },
+      containerColor = MaterialTheme.colorScheme.surface,
+      title = { Text("Start New Semester?", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
       text = {
-        Text("This will clear your previous routine and let you scan or create a fresh timetable for your new semester.", color = TextSecondaryGray)
+        Text("This will clear your previous routine and let you scan or create a fresh timetable for your new semester.", color = MaterialTheme.colorScheme.onSurfaceVariant)
       },
       confirmButton = {
         Button(
@@ -714,14 +917,14 @@ fun MainScreen(
             showNewSemesterDialog = false
             viewModel.openScanner()
           },
-          colors = ButtonDefaults.buttonColors(containerColor = AccentLilac)
+          colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-          Text("Start Fresh", color = Color.Black, fontWeight = FontWeight.Bold)
+          Text("Start Fresh", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
         }
       },
       dismissButton = {
         TextButton(onClick = { showNewSemesterDialog = false }) {
-          Text("Cancel", color = TextSecondaryGray)
+          Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
       }
     )
@@ -731,19 +934,43 @@ fun MainScreen(
   if (showBreaksDialog) {
     AlertDialog(
       onDismissRequest = { showBreaksDialog = false },
-      containerColor = DarkSurfaceCard,
-      title = { Text("Breaks & Holidays", color = TextPrimaryWhite, fontWeight = FontWeight.Bold) },
+      containerColor = MaterialTheme.colorScheme.surface,
+      title = { Text("Breaks & Holidays", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
       text = {
         Column {
-          Text("• Semester Break: Dec 20 – Jan 5", color = TextPrimaryWhite)
-          Text("• Mid-term Recess: Oct 28 – Nov 2", color = TextPrimaryWhite)
-          Text("• National Holiday: Dec 16", color = TextPrimaryWhite)
+          Text("• Semester Break: Dec 20 – Jan 5", color = MaterialTheme.colorScheme.onSurface)
+          Text("• Mid-term Recess: Oct 28 – Nov 2", color = MaterialTheme.colorScheme.onSurface)
+          Text("• National Holiday: Dec 16", color = MaterialTheme.colorScheme.onSurface)
         }
       },
       confirmButton = {
-        Button(onClick = { showBreaksDialog = false }, colors = ButtonDefaults.buttonColors(containerColor = AccentLilac)) {
-          Text("Close", color = Color.Black, fontWeight = FontWeight.Bold)
+        Button(
+          onClick = { showBreaksDialog = false },
+          colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+          Text("Close", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
         }
+      }
+    )
+  }
+
+  // Theme & Appearance Customizer Dialog
+  if (showThemeModal) {
+    ThemeSelectionDialog(
+      currentTheme = currentTheme,
+      oledPitchBlackEnabled = oledPitchBlackEnabled,
+      accentOverrideHex = accentOverrideHex,
+      onThemeSelected = { mode ->
+        viewModel.setTheme(mode)
+      },
+      onOledPitchBlackToggled = { enabled ->
+        viewModel.setOledPitchBlack(enabled)
+      },
+      onAccentOverrideSelected = { hex ->
+        viewModel.setAccentOverride(hex)
+      },
+      onDismiss = {
+        viewModel.closeThemeModal()
       }
     )
   }

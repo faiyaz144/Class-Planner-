@@ -54,6 +54,7 @@ import com.example.ui.theme.AccentLilac
 import com.example.ui.theme.DarkSurfaceCard
 import com.example.ui.theme.TextPrimaryWhite
 import com.example.ui.theme.TextSecondaryGray
+import com.example.util.rememberAppHaptic
 import java.util.Calendar
 
 enum class TimelineClassStatus {
@@ -75,6 +76,8 @@ fun TodayScheduleDashboardWidget(
   onDeleteRoutine: (String) -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val haptic = rememberAppHaptic()
+
   val sortedRoutines = remember(routines) {
     routines.sortedBy { it.startMinutes }
   }
@@ -119,7 +122,7 @@ fun TodayScheduleDashboardWidget(
       .fillMaxWidth()
       .testTag("today_schedule_dashboard_widget"),
     shape = RoundedCornerShape(24.dp),
-    colors = CardDefaults.cardColors(containerColor = DarkSurfaceCard),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
   ) {
     Column(
@@ -138,7 +141,7 @@ fun TodayScheduleDashboardWidget(
             Icon(
               imageVector = Icons.Default.TrackChanges,
               contentDescription = null,
-              tint = AccentLilac,
+              tint = MaterialTheme.colorScheme.primary,
               modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -201,7 +204,7 @@ fun TodayScheduleDashboardWidget(
             } else {
               Text(
                 text = if (totalCount == 1) "1 CLASS" else "$totalCount CLASSES",
-                color = AccentLilac,
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold
               )
@@ -248,7 +251,7 @@ fun TodayScheduleDashboardWidget(
             .fillMaxWidth()
             .height(6.dp)
             .clip(RoundedCornerShape(3.dp)),
-          color = AccentLilac,
+          color = MaterialTheme.colorScheme.primary,
           trackColor = Color(0xFF22243A)
         )
       }
@@ -274,7 +277,7 @@ fun TodayScheduleDashboardWidget(
             Icon(
               imageVector = Icons.Default.WbSunny,
               contentDescription = "No classes",
-              tint = AccentLilac,
+              tint = MaterialTheme.colorScheme.primary,
               modifier = Modifier.size(28.dp)
             )
           }
@@ -302,8 +305,11 @@ fun TodayScheduleDashboardWidget(
           Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Surface(
               shape = RoundedCornerShape(20.dp),
-              color = AccentLilac,
-              modifier = Modifier.clickable { onScanRoutineClick() }
+              color = MaterialTheme.colorScheme.primary,
+              modifier = Modifier.clickable {
+                haptic.click()
+                onScanRoutineClick()
+              }
             ) {
               Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -323,7 +329,10 @@ fun TodayScheduleDashboardWidget(
             Surface(
               shape = RoundedCornerShape(20.dp),
               color = Color(0xFF1E2034),
-              modifier = Modifier.clickable { onAddClassClick() }
+              modifier = Modifier.clickable {
+                haptic.click()
+                onAddClassClick()
+              }
             ) {
               Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -373,6 +382,7 @@ private fun ChronologicalClassItem(
   onEdit: () -> Unit,
   onDelete: () -> Unit
 ) {
+  val haptic = rememberAppHaptic()
   val accentColor = Color(routine.colorHex)
   val isCompleted = status == TimelineClassStatus.COMPLETED
   val isOngoing = status == TimelineClassStatus.ONGOING
@@ -411,7 +421,7 @@ private fun ChronologicalClassItem(
           .background(
             when (status) {
               TimelineClassStatus.ONGOING -> Color(0xFF10B981)
-              TimelineClassStatus.NEXT_UP -> AccentLilac
+              TimelineClassStatus.NEXT_UP -> MaterialTheme.colorScheme.primary
               TimelineClassStatus.COMPLETED -> Color(0xFF26283E)
               TimelineClassStatus.UPCOMING -> Color(0xFF1A1B2C)
             }
@@ -420,7 +430,7 @@ private fun ChronologicalClassItem(
             width = 2.dp,
             color = when (status) {
               TimelineClassStatus.ONGOING -> Color(0xFF10B981)
-              TimelineClassStatus.NEXT_UP -> AccentLilac
+              TimelineClassStatus.NEXT_UP -> MaterialTheme.colorScheme.primary
               TimelineClassStatus.COMPLETED -> Color(0xFF383A5A)
               TimelineClassStatus.UPCOMING -> Color(0xFF383A5A)
             },
@@ -524,13 +534,13 @@ private fun ChronologicalClassItem(
                 val minsUntil = (routine.startMinutes - currentMinutes).coerceAtLeast(0)
                 Surface(
                   shape = RoundedCornerShape(10.dp),
-                  color = AccentLilac.copy(alpha = 0.2f)
+                  color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                 ) {
                   Text(
                     text = if (minsUntil > 0) "IN ${minsUntil}M" else "NEXT UP",
                     fontWeight = FontWeight.Bold,
                     fontSize = 10.sp,
-                    color = AccentLilac,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                   )
                 }
@@ -550,7 +560,10 @@ private fun ChronologicalClassItem(
           // Edit & Delete actions
           Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(
-              onClick = onEdit,
+              onClick = {
+                haptic.click()
+                onEdit()
+              },
               modifier = Modifier.size(26.dp)
             ) {
               Icon(
@@ -562,7 +575,10 @@ private fun ChronologicalClassItem(
             }
 
             IconButton(
-              onClick = onDelete,
+              onClick = {
+                haptic.reject()
+                onDelete()
+              },
               modifier = Modifier.size(26.dp)
             ) {
               Icon(

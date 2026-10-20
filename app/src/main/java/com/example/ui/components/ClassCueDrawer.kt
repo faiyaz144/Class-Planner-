@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
@@ -57,12 +58,14 @@ import com.example.ui.theme.DarkSurfaceCard
 import com.example.ui.theme.TextMutedGray
 import com.example.ui.theme.TextPrimaryWhite
 import com.example.ui.theme.TextSecondaryGray
+import com.example.util.rememberAppHaptic
 
 @Composable
 fun ClassCueDrawerContent(
   studentName: String,
   totalClassesWeekly: Int,
   attendanceCount: Int,
+  currentThemeName: String = "",
   onOpenAttendance: () -> Unit,
   onNewSemester: () -> Unit,
   onOpenBreaks: () -> Unit,
@@ -71,6 +74,7 @@ fun ClassCueDrawerContent(
   onImportRoutine: () -> Unit,
   onScanExamRoutine: () -> Unit,
   onOpenSettings: () -> Unit,
+  onOpenThemes: () -> Unit,
   onCloseDrawer: () -> Unit,
   modifier: Modifier = Modifier
 ) {
@@ -78,7 +82,7 @@ fun ClassCueDrawerContent(
     modifier = modifier
       .fillMaxHeight()
       .width(310.dp)
-      .background(Color(0xFF0C0D15))
+      .background(MaterialTheme.colorScheme.surface)
       .padding(horizontal = 20.dp, vertical = 28.dp)
       .verticalScroll(rememberScrollState()),
     verticalArrangement = Arrangement.SpaceBetween
@@ -225,6 +229,17 @@ fun ClassCueDrawerContent(
       DrawerSectionHeader(title = "APP")
 
       DrawerMenuItem(
+        icon = Icons.Default.Palette,
+        label = "Theme & Appearance",
+        badge = if (currentThemeName.isNotBlank()) currentThemeName else null,
+        onClick = {
+          onCloseDrawer()
+          onOpenThemes()
+        },
+        testTag = "drawer_themes"
+      )
+
+      DrawerMenuItem(
         icon = Icons.Default.Settings,
         label = "Settings",
         onClick = {
@@ -242,6 +257,10 @@ fun ClassCueDrawerContent(
       modifier = Modifier
         .fillMaxWidth()
         .padding(top = 20.dp)
+        .clickable {
+          onCloseDrawer()
+          onOpenThemes()
+        }
     ) {
       Row(
         modifier = Modifier
@@ -314,11 +333,15 @@ fun DrawerMenuItem(
   onClick: () -> Unit,
   testTag: String
 ) {
+  val haptic = rememberAppHaptic()
   Row(
     modifier = Modifier
       .fillMaxWidth()
       .clip(RoundedCornerShape(12.dp))
-      .clickable { onClick() }
+      .clickable {
+        haptic.click()
+        onClick()
+      }
       .padding(vertical = 10.dp, horizontal = 4.dp)
       .testTag(testTag),
     verticalAlignment = Alignment.CenterVertically,
@@ -329,13 +352,13 @@ fun DrawerMenuItem(
         modifier = Modifier
           .size(36.dp)
           .clip(RoundedCornerShape(10.dp))
-          .background(Color(0xFF161726)),
+          .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
       ) {
         Icon(
           icon,
           contentDescription = null,
-          tint = TextSecondaryGray,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.size(18.dp)
         )
       }
@@ -346,23 +369,24 @@ fun DrawerMenuItem(
         text = label,
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = FontWeight.Medium,
-        color = TextPrimaryWhite,
+        color = MaterialTheme.colorScheme.onSurface,
         fontSize = 15.sp
       )
     }
 
     if (badge != null) {
       Surface(
-        shape = CircleShape,
-        color = Color(0xFF222336),
-        modifier = Modifier.size(24.dp)
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.padding(start = 4.dp)
       ) {
         Box(contentAlignment = Alignment.Center) {
           Text(
             text = badge,
             fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextSecondaryGray
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
           )
         }
       }

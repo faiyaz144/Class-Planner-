@@ -47,6 +47,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import android.content.pm.PackageManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.example.ui.theme.AccentLilac
+import com.example.util.rememberAppHaptic
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -80,8 +85,11 @@ fun ScanScreen(
   onStartScan: () -> Unit,
   onConfirmRoutines: (List<ClassRoutine>, Boolean) -> Unit,
   onResetScan: () -> Unit,
+  onSampleClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier
 ) {
+  val context = LocalContext.current
+  val haptic = rememberAppHaptic()
   var selectedInputMethod by remember { mutableIntStateOf(0) } // 0: Photo/Camera Scan, 1: Paste Text
   var rawTextRoutine by remember { mutableStateOf("") }
 
@@ -100,6 +108,15 @@ fun ScanScreen(
   ) { bitmap ->
     if (bitmap != null) {
       onBitmapCaptured(bitmap)
+    }
+  }
+
+  // Camera runtime permission launcher
+  val cameraPermissionLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.RequestPermission()
+  ) { isGranted ->
+    if (isGranted) {
+      cameraLauncher.launch(null)
     }
   }
 
@@ -184,7 +201,10 @@ fun ScanScreen(
       SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         SegmentedButton(
           selected = selectedInputMethod == 0,
-          onClick = { selectedInputMethod = 0 },
+          onClick = {
+            haptic.tick()
+            selectedInputMethod = 0
+          },
           shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
           modifier = Modifier.testTag("method_photo")
         ) {
@@ -194,7 +214,10 @@ fun ScanScreen(
         }
         SegmentedButton(
           selected = selectedInputMethod == 1,
-          onClick = { selectedInputMethod = 1 },
+          onClick = {
+            haptic.tick()
+            selectedInputMethod = 1
+          },
           shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
           modifier = Modifier.testTag("method_text")
         ) {
@@ -235,7 +258,10 @@ fun ScanScreen(
             ) {
               // Upload Button
               Button(
-                onClick = { filePickerLauncher.launch("image/*") },
+                onClick = {
+                  haptic.click()
+                  filePickerLauncher.launch("image/*")
+                },
                 modifier = Modifier
                   .weight(1f)
                   .testTag("upload_image_btn"),
@@ -248,7 +274,19 @@ fun ScanScreen(
 
               // Camera Button
               OutlinedButton(
-                onClick = { cameraLauncher.launch(null) },
+                onClick = {
+                  haptic.click()
+                  val hasPermission = ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.CAMERA
+                  ) == PackageManager.PERMISSION_GRANTED
+
+                  if (hasPermission) {
+                    cameraLauncher.launch(null)
+                  } else {
+                    cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                  }
+                },
                 modifier = Modifier
                   .weight(1f)
                   .testTag("camera_capture_btn"),
@@ -257,6 +295,24 @@ fun ScanScreen(
                 Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Take Photo")
+              }
+            }
+
+            if (onSampleClick != null) {
+              Spacer(modifier = Modifier.height(10.dp))
+              OutlinedButton(
+                onClick = {
+                  haptic.click()
+                  onSampleClick()
+                },
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .testTag("load_sample_timetable_btn"),
+                shape = RoundedCornerShape(12.dp)
+              ) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp), tint = AccentLilac)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Load Timetable Photo Sheet (Test)", color = AccentLilac)
               }
             }
           }
@@ -416,6 +472,7 @@ fun SelectedImageCard(
   onStartScan: () -> Unit,
   onCancel: () -> Unit
 ) {
+  val haptic = rememberAppHaptic()
   Card(
     shape = RoundedCornerShape(16.dp),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -442,7 +499,12 @@ fun SelectedImageCard(
           )
         }
 
-        IconButton(onClick = onCancel) {
+        IconButton(
+          onClick = {
+            haptic.click()
+            onCancel()
+          }
+        ) {
           Icon(Icons.Default.Close, contentDescription = "Cancel", tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
       }
@@ -467,7 +529,10 @@ fun SelectedImageCard(
       Spacer(modifier = Modifier.height(16.dp))
 
       Button(
-        onClick = onStartScan,
+        onClick = {
+          haptic.heavy()
+          onStartScan()
+        },
         modifier = Modifier
           .fillMaxWidth()
           .height(52.dp)
@@ -552,6 +617,7 @@ fun ExtractedResultsSection(
   onConfirm: (List<ClassRoutine>, Boolean) -> Unit,
   onCancel: () -> Unit
 ) {
+  val haptic = rememberAppHaptic()
   val editableList = remember(extractedRoutines) {
     mutableStateListOf(*extractedRoutines.toTypedArray())
   }
@@ -650,7 +716,10 @@ fun ExtractedResultsSection(
             }
 
             IconButton(
-              onClick = { editableList.removeAt(index) },
+              onClick = {
+                haptic.reject()
+                editableList.removeAt(index)
+              },
               modifier = Modifier.size(32.dp)
             ) {
               Icon(
@@ -671,7 +740,10 @@ fun ExtractedResultsSection(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
       ) {
         Button(
-          onClick = { onConfirm(editableList.toList(), true) },
+          onClick = {
+            haptic.confirm()
+            onConfirm(editableList.toList(), true)
+          },
           modifier = Modifier
             .weight(1f)
             .testTag("save_replace_schedule_btn"),
@@ -686,7 +758,10 @@ fun ExtractedResultsSection(
         }
 
         OutlinedButton(
-          onClick = { onConfirm(editableList.toList(), false) },
+          onClick = {
+            haptic.confirm()
+            onConfirm(editableList.toList(), false)
+          },
           modifier = Modifier
             .weight(1f)
             .testTag("append_schedule_btn"),

@@ -58,6 +58,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import com.example.util.rememberAppHaptic
 
 @Composable
 fun TodayScreen(
@@ -75,6 +76,8 @@ fun TodayScreen(
   onDeleteRoutine: (String) -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val haptic = rememberAppHaptic()
+
   val greeting = remember {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     when (hour) {
@@ -119,7 +122,7 @@ fun TodayScreen(
   LazyColumn(
     modifier = modifier
       .fillMaxSize()
-      .background(DarkAppBackground)
+      .background(MaterialTheme.colorScheme.background)
       .testTag("today_screen_list"),
     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -131,13 +134,13 @@ fun TodayScreen(
           text = "$greeting, $studentName",
           style = MaterialTheme.typography.headlineMedium,
           fontWeight = FontWeight.Bold,
-          color = TextPrimaryWhite
+          color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
           text = todayFormatted,
           style = MaterialTheme.typography.bodyMedium,
-          color = TextSecondaryGray
+          color = MaterialTheme.colorScheme.onSurfaceVariant
         )
       }
     }
@@ -160,7 +163,10 @@ fun TodayScreen(
           verticalAlignment = Alignment.CenterVertically
         ) {
           IconButton(
-            onClick = onPreviousWeek,
+            onClick = {
+              haptic.tick()
+              onPreviousWeek()
+            },
             modifier = Modifier
               .size(36.dp)
               .testTag("prev_week_arrow")
@@ -168,7 +174,7 @@ fun TodayScreen(
             Icon(
               Icons.AutoMirrored.Filled.KeyboardArrowLeft,
               contentDescription = "Previous week",
-              tint = TextSecondaryGray,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.size(20.dp)
             )
           }
@@ -177,11 +183,14 @@ fun TodayScreen(
             text = weekRangeTitle,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
-            color = TextSecondaryGray
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
 
           IconButton(
-            onClick = onNextWeek,
+            onClick = {
+              haptic.tick()
+              onNextWeek()
+            },
             modifier = Modifier
               .size(36.dp)
               .testTag("next_week_arrow")
@@ -189,7 +198,7 @@ fun TodayScreen(
             Icon(
               Icons.AutoMirrored.Filled.KeyboardArrowRight,
               contentDescription = "Next week",
-              tint = TextSecondaryGray,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.size(20.dp)
             )
           }
@@ -235,6 +244,7 @@ fun NextClassHeroCard(
   nextClass: ClassRoutine?,
   onAddClassClick: () -> Unit
 ) {
+  val haptic = rememberAppHaptic()
   Card(
     shape = RoundedCornerShape(24.dp),
     colors = CardDefaults.cardColors(containerColor = Color.Transparent),
@@ -248,9 +258,9 @@ fun NextClassHeroCard(
         .background(
           Brush.linearGradient(
             colors = listOf(
-              Color(0xFF20203A),
-              Color(0xFF282548),
-              Color(0xFF1B1B30)
+              MaterialTheme.colorScheme.primaryContainer,
+              MaterialTheme.colorScheme.surfaceVariant,
+              MaterialTheme.colorScheme.surface
             )
           )
         )
@@ -267,7 +277,7 @@ fun NextClassHeroCard(
             // Next class time badge
             Surface(
               shape = RoundedCornerShape(12.dp),
-              color = Color(0xFF323054)
+              color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
             ) {
               Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -277,7 +287,7 @@ fun NextClassHeroCard(
                   text = "NEXT CLASS",
                   style = MaterialTheme.typography.labelSmall,
                   fontWeight = FontWeight.Bold,
-                  color = TextSecondaryGray,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
                   fontSize = 10.sp
                 )
                 Spacer(modifier = Modifier.width(6.dp))
@@ -285,24 +295,24 @@ fun NextClassHeroCard(
                   modifier = Modifier
                     .size(6.dp)
                     .clip(CircleShape)
-                    .background(AccentLilac)
+                    .background(MaterialTheme.colorScheme.primary)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                   text = "${nextClass.dayOfWeek.take(3)}, ${nextClass.startTime}",
                   style = MaterialTheme.typography.labelSmall,
                   fontWeight = FontWeight.SemiBold,
-                  color = TextPrimaryWhite,
+                  color = MaterialTheme.colorScheme.onSurface,
                   fontSize = 11.sp
                 )
               }
             }
 
-            // White Room badge on the right (Image 1: ROOM 607)
+            // Room badge on the right
             if (nextClass.room.isNotBlank()) {
               Surface(
-                shape = RoundedCornerShape(18.dp),
-                color = Color.White
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primary
               ) {
                 Column(
                   modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
@@ -312,14 +322,14 @@ fun NextClassHeroCard(
                     text = "ROOM",
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF6B7280),
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                     letterSpacing = 0.5.sp
                   )
                   Text(
                     text = nextClass.room.removePrefix("Room").removePrefix("ROOM").trim(),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onPrimary
                   )
                 }
               }
@@ -333,7 +343,7 @@ fun NextClassHeroCard(
             text = nextClass.courseCode,
             style = MaterialTheme.typography.displayLarge,
             fontWeight = FontWeight.Bold,
-            color = TextPrimaryWhite,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 32.sp,
             letterSpacing = (-0.5).sp
           )
@@ -343,7 +353,7 @@ fun NextClassHeroCard(
             text = nextClass.courseTitle,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Normal,
-            color = Color(0xFFD4D0F4)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
 
           Spacer(modifier = Modifier.height(12.dp))
@@ -353,7 +363,7 @@ fun NextClassHeroCard(
             text = "${nextClass.startTime} – ${nextClass.endTime}${if (nextClass.section.isNotBlank()) " · ${nextClass.section}" else ""}",
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Medium,
-            color = TextSecondaryGray
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
       } else {
@@ -361,13 +371,13 @@ fun NextClassHeroCard(
         Column(modifier = Modifier.fillMaxWidth()) {
           Surface(
             shape = RoundedCornerShape(12.dp),
-            color = Color(0xFF323054)
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
           ) {
             Text(
               text = "NEXT CLASS · ALL CAUGHT UP",
               style = MaterialTheme.typography.labelSmall,
               fontWeight = FontWeight.Bold,
-              color = AccentLilac,
+              color = MaterialTheme.colorScheme.primary,
               modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
             )
           }
@@ -378,13 +388,13 @@ fun NextClassHeroCard(
             text = "No Upcoming Class",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = TextPrimaryWhite
+            color = MaterialTheme.colorScheme.onSurface
           )
 
           Text(
             text = "Add classes or scan your timetable to see your next lecture here.",
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFFD4D0F4)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
 
           Spacer(modifier = Modifier.height(10.dp))
@@ -392,8 +402,11 @@ fun NextClassHeroCard(
           Text(
             text = "+ Tap the top-right button to add a class",
             style = MaterialTheme.typography.labelSmall,
-            color = AccentLilac,
-            modifier = Modifier.clickable { onAddClassClick() }
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.clickable {
+              haptic.click()
+              onAddClassClick()
+            }
           )
         }
       }
@@ -408,15 +421,19 @@ fun DayCapsulePill(
   onClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  val backgroundColor = if (isSelected) AccentLilac else Color(0xFF151624)
-  val textColor = if (isSelected) Color(0xFF090A10) else TextPrimaryWhite
-  val subTextColor = if (isSelected) Color(0xFF1E1F30) else TextSecondaryGray
+  val haptic = rememberAppHaptic()
+  val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+  val textColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+  val subTextColor = if (isSelected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
 
   Surface(
     shape = RoundedCornerShape(18.dp),
     color = backgroundColor,
     modifier = modifier
-      .clickable { onClick() }
+      .clickable {
+        haptic.tick()
+        onClick()
+      }
       .testTag("capsule_${capsule.dayShort}")
   ) {
     Column(

@@ -49,6 +49,7 @@ import com.example.ui.theme.DarkAppBackground
 import com.example.ui.theme.TextMutedGray
 import com.example.ui.theme.TextPrimaryWhite
 import com.example.ui.theme.TextSecondaryGray
+import com.example.util.rememberAppHaptic
 
 @Composable
 fun WeeklyScreen(
@@ -62,6 +63,7 @@ fun WeeklyScreen(
   onDeleteRoutine: (String) -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val haptic = rememberAppHaptic()
   val horizontalScroll = rememberScrollState()
   val verticalScroll = rememberScrollState()
 
@@ -77,7 +79,7 @@ fun WeeklyScreen(
   Column(
     modifier = modifier
       .fillMaxSize()
-      .background(DarkAppBackground)
+      .background(MaterialTheme.colorScheme.background)
       .testTag("weekly_screen_view")
   ) {
     // Navigation bar with < X classes > (Image 3)
@@ -89,13 +91,16 @@ fun WeeklyScreen(
       verticalAlignment = Alignment.CenterVertically
     ) {
       IconButton(
-        onClick = onPreviousWeek,
+        onClick = {
+          haptic.tick()
+          onPreviousWeek()
+        },
         modifier = Modifier.size(32.dp).testTag("week_grid_prev_btn")
       ) {
         Icon(
           Icons.AutoMirrored.Filled.KeyboardArrowLeft,
           contentDescription = "Previous week",
-          tint = TextSecondaryGray,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.size(18.dp)
         )
       }
@@ -106,19 +111,22 @@ fun WeeklyScreen(
         text = if (totalClassCount == 1) "1 class" else "$totalClassCount classes",
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = FontWeight.Medium,
-        color = TextSecondaryGray
+        color = MaterialTheme.colorScheme.onSurfaceVariant
       )
 
       Spacer(modifier = Modifier.width(16.dp))
 
       IconButton(
-        onClick = onNextWeek,
+        onClick = {
+          haptic.tick()
+          onNextWeek()
+        },
         modifier = Modifier.size(32.dp).testTag("week_grid_next_btn")
       ) {
         Icon(
           Icons.AutoMirrored.Filled.KeyboardArrowRight,
           contentDescription = "Next week",
-          tint = TextSecondaryGray,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.size(18.dp)
         )
       }
@@ -138,7 +146,7 @@ fun WeeklyScreen(
         // Sticky Day Header Row: Sat 10, Sun 11, Mon 12, Tue 13, Wed 14, Thu 15, Fri 16
         Row(
           modifier = Modifier
-            .background(DarkAppBackground)
+            .background(MaterialTheme.colorScheme.background)
             .padding(vertical = 10.dp)
         ) {
           // Empty space above time labels
@@ -155,20 +163,20 @@ fun WeeklyScreen(
                 text = capsule.dayShort,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = TextSecondaryGray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
               )
               Spacer(modifier = Modifier.height(2.dp))
               Text(
                 text = "${capsule.dateNumber}",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimaryWhite
+                color = MaterialTheme.colorScheme.onBackground
               )
             }
           }
         }
 
-        HorizontalDivider(color = Color(0xFF1E2030), thickness = 1.dp)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
 
         // Scrollable Grid Area (Time Axis + Day Columns)
         Row(
@@ -259,7 +267,10 @@ fun WeeklyScreen(
                     .height(cardHeightDp.dp - 2.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color(routine.colorHex))
-                    .clickable { onEditRoutine(routine) }
+                    .clickable {
+                      haptic.click()
+                      onEditRoutine(routine)
+                    }
                     .padding(8.dp)
                     .testTag("grid_class_${routine.courseCode}")
                 ) {

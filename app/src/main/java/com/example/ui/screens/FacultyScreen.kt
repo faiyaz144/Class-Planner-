@@ -42,16 +42,19 @@ import com.example.ui.theme.DarkAppBackground
 import com.example.ui.theme.DarkSurfaceCard
 import com.example.ui.theme.TextPrimaryWhite
 import com.example.ui.theme.TextSecondaryGray
+import com.example.util.rememberAppHaptic
+import androidx.compose.foundation.clickable
 
 @Composable
 fun FacultyScreen(
   facultyList: List<FacultyMember>,
   modifier: Modifier = Modifier
 ) {
+  val haptic = rememberAppHaptic()
   LazyColumn(
     modifier = modifier
       .fillMaxSize()
-      .background(DarkAppBackground)
+      .background(MaterialTheme.colorScheme.background)
       .testTag("faculty_screen_list"),
     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
     verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -62,12 +65,12 @@ fun FacultyScreen(
           text = "Faculty Directory",
           style = MaterialTheme.typography.headlineMedium,
           fontWeight = FontWeight.Bold,
-          color = TextPrimaryWhite
+          color = MaterialTheme.colorScheme.onBackground
         )
         Text(
           text = "Course instructors, departments & office rooms",
           style = MaterialTheme.typography.bodySmall,
-          color = TextSecondaryGray
+          color = MaterialTheme.colorScheme.onSurfaceVariant
         )
       }
     }
@@ -76,7 +79,7 @@ fun FacultyScreen(
       item {
         Card(
           shape = RoundedCornerShape(20.dp),
-          colors = CardDefaults.cardColors(containerColor = DarkSurfaceCard),
+          colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
           modifier = Modifier.fillMaxWidth()
         ) {
           Column(
@@ -85,10 +88,10 @@ fun FacultyScreen(
               .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
           ) {
-            Icon(Icons.Default.Person, contentDescription = null, tint = AccentLilac, modifier = Modifier.size(48.dp))
+            Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
             Spacer(modifier = Modifier.height(12.dp))
-            Text("No faculty recorded yet", fontWeight = FontWeight.Bold, color = TextPrimaryWhite)
-            Text("Add courses with instructor names or scan your timetable to populate faculty contacts.", style = MaterialTheme.typography.bodySmall, color = TextSecondaryGray)
+            Text("No faculty recorded yet", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text("Add courses with instructor names or scan your timetable to populate faculty contacts.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
           }
         }
       }
@@ -96,8 +99,10 @@ fun FacultyScreen(
       items(facultyList, key = { it.id }) { faculty ->
         Card(
           shape = RoundedCornerShape(18.dp),
-          colors = CardDefaults.cardColors(containerColor = DarkSurfaceCard),
-          modifier = Modifier.fillMaxWidth()
+          colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+          modifier = Modifier
+            .fillMaxWidth()
+            .clickable { haptic.click() }
         ) {
           Row(
             modifier = Modifier
@@ -109,14 +114,14 @@ fun FacultyScreen(
               modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(AccentLilac.copy(alpha = 0.2f)),
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
               contentAlignment = Alignment.Center
             ) {
               Text(
                 text = faculty.name.take(2).uppercase(),
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = AccentLilac
+                color = MaterialTheme.colorScheme.primary
               )
             }
 
@@ -127,20 +132,20 @@ fun FacultyScreen(
                 text = faculty.name,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = TextPrimaryWhite
+                color = MaterialTheme.colorScheme.onSurface
               )
               Text(
                 text = "${faculty.designation} · ${faculty.department}",
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondaryGray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
               )
 
               if (faculty.roomOffice.isNotBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                  Icon(Icons.Default.LocationOn, contentDescription = null, tint = AccentLilac, modifier = Modifier.size(13.dp))
+                  Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(13.dp))
                   Spacer(modifier = Modifier.width(4.dp))
-                  Text(text = faculty.roomOffice, style = MaterialTheme.typography.bodySmall, color = TextSecondaryGray)
+                  Text(text = faculty.roomOffice, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
               }
 
@@ -150,13 +155,13 @@ fun FacultyScreen(
                   faculty.courses.forEach { code ->
                     Surface(
                       shape = RoundedCornerShape(6.dp),
-                      color = Color(0xFF222336)
+                      color = MaterialTheme.colorScheme.surface
                     ) {
                       Text(
                         text = code,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = AccentLilac,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                       )
                     }

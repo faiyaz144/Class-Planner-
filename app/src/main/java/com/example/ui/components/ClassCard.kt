@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.ClassRoutine
+import com.example.util.rememberAppHaptic
 
 enum class ClassLiveStatus {
   ONGOING,
@@ -56,6 +57,7 @@ fun ClassCard(
   onEdit: (() -> Unit)? = null,
   onDelete: (() -> Unit)? = null
 ) {
+  val haptic = rememberAppHaptic()
   val accentColor = Color(routine.colorHex)
 
   Card(
@@ -157,7 +159,10 @@ fun ClassCard(
             Row(horizontalArrangement = Arrangement.End) {
               if (onEdit != null) {
                 IconButton(
-                  onClick = onEdit,
+                  onClick = {
+                    haptic.click()
+                    onEdit()
+                  },
                   modifier = Modifier
                     .size(32.dp)
                     .testTag("edit_button_${routine.courseCode}")
@@ -172,7 +177,10 @@ fun ClassCard(
               }
               if (onDelete != null) {
                 IconButton(
-                  onClick = onDelete,
+                  onClick = {
+                    haptic.reject()
+                    onDelete()
+                  },
                   modifier = Modifier
                     .size(32.dp)
                     .testTag("delete_button_${routine.courseCode}")

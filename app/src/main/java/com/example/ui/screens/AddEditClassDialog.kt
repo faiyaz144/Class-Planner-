@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.model.ClassRoutine
+import com.example.util.rememberAppHaptic
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +53,7 @@ fun AddEditClassDialog(
   onDismiss: () -> Unit,
   onSave: (ClassRoutine) -> Unit
 ) {
+  val haptic = rememberAppHaptic()
   var courseCode by remember { mutableStateOf(initialRoutine?.courseCode.orEmpty()) }
   var courseTitle by remember { mutableStateOf(initialRoutine?.courseTitle.orEmpty()) }
   var dayOfWeek by remember { mutableStateOf(initialRoutine?.dayOfWeek ?: defaultDay) }
@@ -236,7 +238,10 @@ fun AddEditClassDialog(
                   color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
                   shape = CircleShape
                 )
-                .clickable { selectedColorHex = colorHex }
+                .clickable {
+                  haptic.tick()
+                  selectedColorHex = colorHex
+                }
             )
           }
         }
@@ -245,6 +250,7 @@ fun AddEditClassDialog(
     confirmButton = {
       Button(
         onClick = {
+          haptic.confirm()
           val routine = ClassRoutine(
             id = initialRoutine?.id ?: UUID.randomUUID().toString(),
             courseCode = if (courseCode.isBlank()) "GEN101" else courseCode.trim().uppercase(),

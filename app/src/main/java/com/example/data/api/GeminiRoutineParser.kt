@@ -22,14 +22,13 @@ import java.util.concurrent.TimeUnit
 class GeminiRoutineParser(private val context: Context) {
 
   private val client = OkHttpClient.Builder()
-    .connectTimeout(25, TimeUnit.SECONDS)
-    .readTimeout(35, TimeUnit.SECONDS)
-    .writeTimeout(25, TimeUnit.SECONDS)
+    .connectTimeout(60, TimeUnit.SECONDS)
+    .readTimeout(60, TimeUnit.SECONDS)
+    .writeTimeout(60, TimeUnit.SECONDS)
     .build()
 
   /**
-   * Analyzes an image of a university class routine using gemini-4-argon multimodal model.
-   * Cascades to gemini-3.8-flash if gemini-4-argon hits quota or is unavailable.
+   * Analyzes an image of a university class routine using multimodal Gemini AI.
    * Extracts ONLY the actual classes present in the user's image.
    */
   suspend fun analyzeRoutineImage(
@@ -108,7 +107,7 @@ class GeminiRoutineParser(private val context: Context) {
     }
 
     val requestBody = jsonBody.toString().toRequestBody("application/json".toMediaType())
-    val modelsToTry = listOf("gemini-4-argon", "gemini-3.8-flash")
+    val modelsToTry = listOf("gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest")
     var lastError: Exception? = null
 
     for (model in modelsToTry) {
@@ -232,7 +231,7 @@ class GeminiRoutineParser(private val context: Context) {
     }
 
     val requestBody = jsonBody.toString().toRequestBody("application/json".toMediaType())
-    val modelsToTry = listOf("gemini-4-argon", "gemini-3.8-flash")
+    val modelsToTry = listOf("gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest")
     var lastError: Exception? = null
 
     for (model in modelsToTry) {
@@ -532,5 +531,18 @@ class GeminiRoutineParser(private val context: Context) {
     val outputStream = ByteArrayOutputStream()
     bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
     return Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
+  }
+
+  fun loadSampleRoutineBitmap(): Bitmap? {
+    return try {
+      val resId = context.resources.getIdentifier("sample_routine_sheet", "drawable", context.packageName)
+      if (resId != 0) {
+        BitmapFactory.decodeResource(context.resources, resId)
+      } else {
+        null
+      }
+    } catch (_: Exception) {
+      null
+    }
   }
 }

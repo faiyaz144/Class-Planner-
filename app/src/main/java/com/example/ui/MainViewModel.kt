@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import android.content.Context
+import com.example.ui.theme.AppThemeMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -86,6 +88,53 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
   private val _showExamScannerModal = MutableStateFlow(false)
   val showExamScannerModal: StateFlow<Boolean> = _showExamScannerModal.asStateFlow()
+
+  private val prefs = application.getSharedPreferences("class_planner_prefs", Context.MODE_PRIVATE)
+
+  private val _currentTheme = MutableStateFlow(
+    AppThemeMode.fromId(prefs.getString("app_theme_mode", AppThemeMode.MIDNIGHT_OBSIDIAN.id))
+  )
+  val currentTheme: StateFlow<AppThemeMode> = _currentTheme.asStateFlow()
+
+  private val _oledPitchBlackEnabled = MutableStateFlow(
+    prefs.getBoolean("oled_pitch_black_enabled", false)
+  )
+  val oledPitchBlackEnabled: StateFlow<Boolean> = _oledPitchBlackEnabled.asStateFlow()
+
+  private val _accentOverrideHex = MutableStateFlow<String?>(
+    prefs.getString("app_accent_override", null)
+  )
+  val accentOverrideHex: StateFlow<String?> = _accentOverrideHex.asStateFlow()
+
+  private val _showThemeModal = MutableStateFlow(false)
+  val showThemeModal: StateFlow<Boolean> = _showThemeModal.asStateFlow()
+
+  fun openThemeModal() {
+    _showThemeModal.value = true
+  }
+
+  fun closeThemeModal() {
+    _showThemeModal.value = false
+  }
+
+  fun setTheme(mode: AppThemeMode) {
+    _currentTheme.value = mode
+    prefs.edit().putString("app_theme_mode", mode.id).apply()
+  }
+
+  fun setOledPitchBlack(enabled: Boolean) {
+    _oledPitchBlackEnabled.value = enabled
+    prefs.edit().putBoolean("oled_pitch_black_enabled", enabled).apply()
+  }
+
+  fun setAccentOverride(hex: String?) {
+    _accentOverrideHex.value = hex
+    if (hex != null) {
+      prefs.edit().putString("app_accent_override", hex).apply()
+    } else {
+      prefs.edit().remove("app_accent_override").apply()
+    }
+  }
 
   private val _showSettingsModal = MutableStateFlow(false)
   val showSettingsModal: StateFlow<Boolean> = _showSettingsModal.asStateFlow()
@@ -266,6 +315,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
   fun onBitmapCaptured(bitmap: Bitmap) {
     _scanState.value = ScanUiState.ImageSelected(bitmap, isSample = false)
+  }
+
+  fun onSampleImageSelected() {
+    viewModelScope.launch {
+      val bitmap = parser.loadSampleRoutineBitmap()
+      if (bitmap != null) {
+        _scanState.value = ScanUiState.ImageSelected(bitmap, isSample = true)
+      } else {
+        _scanState.value = ScanUiState.Error("Sample routine image could not be loaded.", null)
+      }
+    }
   }
 
   fun onImportTextRoutine(rawText: String) {

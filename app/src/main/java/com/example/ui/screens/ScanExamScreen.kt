@@ -76,6 +76,11 @@ import com.example.ui.theme.DarkSurfaceCard
 import com.example.ui.theme.TextPrimaryWhite
 import com.example.ui.theme.TextSecondaryGray
 
+import android.content.pm.PackageManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.example.util.rememberAppHaptic
+
 @Composable
 fun ScanExamScreen(
   scanState: ExamScanUiState,
@@ -87,6 +92,8 @@ fun ScanExamScreen(
   onResetScan: () -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val context = LocalContext.current
+  val haptic = rememberAppHaptic()
   var selectedInputMethod by remember { mutableIntStateOf(0) } // 0: Photo/Camera, 1: Paste Text
   var rawTextRoutine by remember { mutableStateOf("") }
 
@@ -103,6 +110,14 @@ fun ScanExamScreen(
   ) { bitmap ->
     if (bitmap != null) {
       onBitmapCaptured(bitmap)
+    }
+  }
+
+  val cameraPermissionLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.RequestPermission()
+  ) { isGranted ->
+    if (isGranted) {
+      cameraLauncher.launch(null)
     }
   }
 
@@ -187,7 +202,10 @@ fun ScanExamScreen(
       SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         SegmentedButton(
           selected = selectedInputMethod == 0,
-          onClick = { selectedInputMethod = 0 },
+          onClick = {
+            haptic.tick()
+            selectedInputMethod = 0
+          },
           shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
           modifier = Modifier.testTag("exam_method_photo")
         ) {
@@ -197,7 +215,10 @@ fun ScanExamScreen(
         }
         SegmentedButton(
           selected = selectedInputMethod == 1,
-          onClick = { selectedInputMethod = 1 },
+          onClick = {
+            haptic.tick()
+            selectedInputMethod = 1
+          },
           shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
           modifier = Modifier.testTag("exam_method_text")
         ) {
@@ -237,7 +258,10 @@ fun ScanExamScreen(
               horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
               Button(
-                onClick = { filePickerLauncher.launch("image/*") },
+                onClick = {
+                  haptic.click()
+                  filePickerLauncher.launch("image/*")
+                },
                 modifier = Modifier
                   .weight(1f)
                   .testTag("upload_exam_image_btn"),
@@ -249,7 +273,19 @@ fun ScanExamScreen(
               }
 
               OutlinedButton(
-                onClick = { cameraLauncher.launch(null) },
+                onClick = {
+                  haptic.click()
+                  val hasPermission = ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.CAMERA
+                  ) == PackageManager.PERMISSION_GRANTED
+
+                  if (hasPermission) {
+                    cameraLauncher.launch(null)
+                  } else {
+                    cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                  }
+                },
                 modifier = Modifier
                   .weight(1f)
                   .testTag("camera_exam_capture_btn"),
@@ -332,7 +368,12 @@ fun ScanExamScreen(
                     )
                   }
 
-                  IconButton(onClick = onResetScan) {
+                  IconButton(
+                    onClick = {
+                      haptic.click()
+                      onResetScan()
+                    }
+                  ) {
                     Icon(Icons.Default.Close, contentDescription = "Cancel", tint = TextSecondaryGray)
                   }
                 }
@@ -357,7 +398,10 @@ fun ScanExamScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                  onClick = onStartScan,
+                  onClick = {
+                    haptic.heavy()
+                    onStartScan()
+                  },
                   modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
@@ -487,7 +531,10 @@ fun ScanExamScreen(
                       }
 
                       IconButton(
-                        onClick = { editableList.removeAt(index) },
+                        onClick = {
+                          haptic.reject()
+                          editableList.removeAt(index)
+                        },
                         modifier = Modifier.size(32.dp)
                       ) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
@@ -503,7 +550,10 @@ fun ScanExamScreen(
                   horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                   Button(
-                    onClick = { onConfirmExams(editableList.toList(), true) },
+                    onClick = {
+                      haptic.confirm()
+                      onConfirmExams(editableList.toList(), true)
+                    },
                     modifier = Modifier.weight(1f).testTag("save_replace_exams_btn"),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentLilac)
@@ -514,7 +564,10 @@ fun ScanExamScreen(
                   }
 
                   OutlinedButton(
-                    onClick = { onConfirmExams(editableList.toList(), false) },
+                    onClick = {
+                      haptic.confirm()
+                      onConfirmExams(editableList.toList(), false)
+                    },
                     modifier = Modifier.weight(1f).testTag("append_exams_btn"),
                     shape = RoundedCornerShape(12.dp)
                   ) {
